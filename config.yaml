@@ -1,7 +1,22 @@
+region:
+  name: pakistan
+  lat_min: 23.5
+  lat_max: 37.5
+  lon_min: 60.5
+  lon_max: 77.0
+
 data:
+  events_path: CLOUDPAK25_2010_2025_v3.csv
   raw_path: data/raw/cloudburst_dataset.csv
+  era5_dir: data/raw/era5/
+  urbanization_path: data/raw/urbanization_index.csv
+  terrain_dem_path: data/raw/terrain/dem.tif
+  terrain_index_path: data/raw/terrain_index.csv
+  climatology_path: data/processed/district_climatology.csv
+  monitored_locations_path: data/processed/monitored_locations.csv
   processed_path: data/processed/cleaned.csv
   target_column: cloudburst_occurred
+  precipitation_threshold_mm_per_hr: 30
   test_size: 0.2
   random_state: 42
 
@@ -10,10 +25,16 @@ features:
     - temperature
     - humidity
     - pressure
+    - pressure_drop_3h
     - wind_speed
-    - rainfall
     - dew_point
     - cloud_cover
+    - temp_dewpoint_spread
+    - urbanization_index
+    - elevation
+    - slope
+    - drainage_risk_index
+    - historical_flood_freq
   categorical: []
 
 model:
@@ -22,4 +43,5 @@ model:
     n_estimators: 300
     max_depth: 6
     learning_rate: 0.05
+    scale_pos_weight: 10
   save_path: models/cloudburst_model.pkl

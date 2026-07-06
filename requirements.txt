@@ -10,3 +10,10 @@ pyyaml
 tensorflow
 fastapi
 uvicorn
+cdsapi
+xarray
+netCDF4
+cfgrib
+requests
+rasterio
+shap

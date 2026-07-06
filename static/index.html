@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Pakistan Cloudburst / Flash Flood Risk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 2rem; background: #0f1420; color: #e6e9ef; }
+  h1 { font-size: 1.4rem; margin-bottom: .25rem; }
+  p.sub { color: #9aa4b2; margin-top: 0; margin-bottom: 1.5rem; }
+  .tabs { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  .tabs button { background: #1a2232; border: 1px solid #2a3448; color: #cdd6e3; padding: .5rem 1rem; border-radius: 8px; cursor: pointer; font-size: .9rem; }
+  .tabs button.active { background: #3b6fe0; border-color: #3b6fe0; color: white; }
+  table { width: 100%; border-collapse: collapse; background: #141b29; border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid #232d40; font-size: .9rem; }
+  th { color: #9aa4b2; font-weight: 600; text-transform: uppercase; font-size: .72rem; letter-spacing: .04em; }
+  .badge { display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-weight: 600; font-size: .8rem; }
+  .risk-high { background: #3a1420; color: #ff8a9a; }
+  .risk-med { background: #3a2e12; color: #ffcf7a; }
+  .risk-low { background: #12331f; color: #7ce0a0; }
+  .meta { color: #7f8ba0; font-size: .78rem; }
+  #status { color: #9aa4b2; margin-bottom: 1rem; font-size: .85rem; }
+  .refresh { float: right; background: none; border: 1px solid #2a3448; color: #cdd6e3; padding: .4rem .8rem; border-radius: 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <h1>🌧️ Pakistan Cloudburst / Flash Flood Risk</h1>
+  <p class="sub">Ranked risk of a cloudburst-triggered flash flood, by district. Combines live/forecast weather, terrain &amp; drainage proxies, and historical event trends.</p>
+
+  <div class="tabs">
+    <button data-horizon="hour" class="active">Next Hour</button>
+    <button data-horizon="day">Next 24 Hours</button>
+    <button data-horizon="week">Next 7 Days</button>
+    <button data-horizon="month">Next 30 Days</button>
+    <button class="refresh" id="refreshBtn">↻ Refresh</button>
+  </div>
+
+  <div id="status">Loading…</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>District</th>
+        <th>Risk</th>
+        <th>Probability</th>
+        <th>Peak time (forecast)</th>
+        <th>Elevation</th>
+        <th>Historical vulnerability</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <p class="meta" style="margin-top:1.5rem;">
+    "Historical vulnerability" and drainage risk are proxies derived from
+    past cloudburst events and terrain/urbanization, not official
+    municipal drainage-infrastructure data (see project README).
+  </p>
+
+<script>
+const HORIZON_LABEL = { hour: "hour_risk", day: "day_risk", week: "week_risk", month: "month_risk" };
+let currentHorizon = "hour";
+
+function riskClass(p) {
+  if (p >= 0.5) return "risk-high";
+  if (p >= 0.2) return "risk-med";
+  return "risk-low";
+}
+
+function riskLabel(p) {
+  if (p >= 0.5) return "HIGH";
+  if (p >= 0.2) return "MODERATE";
+  return "LOW";
+}
+
+async function load(horizon) {
+  document.getElementById("status").textContent = "Loading…";
+  document.querySelectorAll(".tabs button[data-horizon]").forEach(b => b.classList.toggle("active", b.dataset.horizon === horizon));
+  try {
+    const res = await fetch(`/api/risk?horizon=${horizon}`);
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    const data = await res.json();
+    render(data.locations, horizon);
+    document.getElementById("status").textContent = `Updated ${new Date().toLocaleTimeString()} — ${data.locations.length} districts monitored`;
+  } catch (err) {
+    document.getElementById("status").textContent = "Error: " + err.message;
+  }
+}
+
+function render(locations, horizon) {
+  const key = HORIZON_LABEL[horizon];
+  const tbody = document.getElementById("rows");
+  tbody.innerHTML = "";
+  locations.forEach((loc, i) => {
+    const p = loc[key];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td><strong>${loc.name}</strong><div class="meta">${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}</div></td>
+      <td><span class="badge ${riskClass(p)}">${riskLabel(p)}</span></td>
+      <td>${(p * 100).toFixed(1)}%</td>
+      <td class="meta">${loc.peak_time ? new Date(loc.peak_time).toLocaleString() : "—"}</td>
+      <td class="meta">${loc.elevation != null ? loc.elevation.toFixed(0) + " m" : "—"}</td>
+      <td class="meta">${loc.historical_flood_freq != null ? loc.historical_flood_freq.toFixed(2) : "—"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.querySelectorAll(".tabs button[data-horizon]").forEach(btn => {
+  btn.addEventListener("click", () => { currentHorizon = btn.dataset.horizon; load(currentHorizon); });
+});
+document.getElementById("refreshBtn").addEventListener("click", () => load(currentHorizon));
+
+load(currentHorizon);
+</script>
+</body>
+</html>
