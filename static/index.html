@@ -76,16 +76,21 @@ function riskLabel(p) {
 }
 
 async function load(horizon) {
-  document.getElementById("status").textContent = "Loading…";
+  document.getElementById("status").textContent = "Loading… (first load after a server restart can take up to a minute — fetching live forecasts for every district)";
   document.querySelectorAll(".tabs button[data-horizon]").forEach(b => b.classList.toggle("active", b.dataset.horizon === horizon));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120000);
   try {
-    const res = await fetch(`/api/risk?horizon=${horizon}`);
+    const res = await fetch(`/api/risk?horizon=${horizon}`, { signal: controller.signal });
     if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
     const data = await res.json();
     render(data.locations, horizon);
     document.getElementById("status").textContent = `Updated ${new Date().toLocaleTimeString()} — ${data.locations.length} districts monitored`;
   } catch (err) {
-    document.getElementById("status").textContent = "Error: " + err.message;
+    const msg = err.name === "AbortError" ? "Timed out after 2 minutes — click Refresh to retry." : err.message;
+    document.getElementById("status").textContent = "Error: " + msg;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

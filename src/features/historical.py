@@ -7,14 +7,13 @@ Two features that stand in for data we don't have free API access to:
   CLOUDPAK25_2010_2025_v3.csv) as a proxy for "how vulnerable is this
   place, historically" — inverse-distance-weighted so it also gives a
   sensible (smaller) value for points between known districts.
-- drainage_risk_index: combines terrain slope (flatter land drains
-  stormwater more slowly) with urbanization (impervious surfaces reduce
-  natural infiltration) into a single proxy for poor drainage capacity.
-  This is NOT a substitute for real municipal drainage-network data —
-  see the README for what a real deployment would need to source
-  manually.
+Real drainage geometry (distance to nearest mapped river/stream/canal,
+and channel density) now comes from `src/data/waterways.py`, built on a
+manually-downloaded HOTOSM waterways dataset — see that module's
+docstring. The synthetic slope*urbanization drainage proxy that used to
+live here has been replaced by it.
 
-Both are pure functions of (lat, lon) plus fixed reference tables, so they
+`historical_flood_freq` is a pure function of (lat, lon) plus fixed reference tables, so they
 are guaranteed to compute identically at training time and at live
 single-point inference time.
 """
@@ -58,19 +57,6 @@ def historical_flood_freq(lat: float, lon: float, events_path: str) -> float:
 def attach_historical_flood_freq(df: pd.DataFrame, events_path: str) -> pd.DataFrame:
     df["historical_flood_freq"] = df.apply(
         lambda row: historical_flood_freq(row["lat"], row["lon"], events_path), axis=1
-    )
-    return df
-
-
-def drainage_risk_index(slope_deg: float, urbanization_index: float) -> float:
-    """Higher urbanization + flatter slope => slower natural runoff => higher risk."""
-    flatness = 1.0 / (1.0 + max(slope_deg, 0.0))
-    return float(urbanization_index * flatness)
-
-
-def attach_drainage_risk_index(df: pd.DataFrame) -> pd.DataFrame:
-    df["drainage_risk_index"] = df.apply(
-        lambda row: drainage_risk_index(row["slope"], row["urbanization_index"]), axis=1
     )
     return df
 

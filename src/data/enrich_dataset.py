@@ -11,7 +11,8 @@ import pandas as pd
 from src.data.load_data import load_config
 from src.data.terrain import attach_terrain, fetch_terrain_openmeteo
 from src.data.urbanization import build_urbanization_proxy
-from src.features.historical import attach_drainage_risk_index, attach_historical_flood_freq
+from src.data.waterways import attach_waterway_features
+from src.features.historical import attach_historical_flood_freq
 
 
 def enrich():
@@ -29,9 +30,11 @@ def enrich():
     urban_df.to_csv(config["data"]["urbanization_path"], index=False)
     df = df.merge(urban_df, on=["lat", "lon"], how="left")
 
-    print("Computing historical flood frequency + drainage risk...")
+    print("Computing historical flood frequency...")
     df = attach_historical_flood_freq(df, config["data"]["events_path"])
-    df = attach_drainage_risk_index(df)
+
+    print("Computing waterway distance/density...")
+    df = attach_waterway_features(df, config["data"]["waterways_path"])
 
     df.to_csv(raw_path, index=False)
     print(f"Saved enriched dataset ({len(df)} rows, {len(df.columns)} columns) to {raw_path}")

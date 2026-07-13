@@ -12,7 +12,8 @@ venv\Scripts\activate
 uvicorn src.app:app --reload --port 8000
 ```
 
-Open http://127.0.0.1:8000 — pick a horizon tab to see districts ranked by
+Open http://127.0.0.1:8000 (if that port's busy/stuck from a previous run,
+pick another with `--port 8080`) — pick a horizon tab to see districts ranked by
 risk, with the forecast time of peak risk, elevation, and historical
 vulnerability score for each.
 
@@ -96,14 +97,20 @@ python -m src.models.train_model
 
 ## Known limitations (be aware of these)
 
-- **150 historical events** is a small training set. The model separates
-  train/test almost perfectly, but that's substantially because
-  `rainfall` (mm in the representative hour) is close to the label's own
-  definition (an hour above a rainfall threshold = a cloudburst). Treat
-  the other features (pressure drop, humidity, terrain, historical
-  frequency) as the model's *real* predictive signal for hours where the
-  actual future rainfall amount is still uncertain — which is exactly
-  the situation a live forecast is in.
+- **150 historical events** is a small training set (ROC-AUC ~0.67 on
+  held-out data). `rainfall` was deliberately excluded from the model's
+  inputs even though it's in the dataset — it's close to the label's own
+  definition (an hour above a rainfall threshold = a cloudburst), so
+  including it makes the model ignore every other feature and just
+  parrot the label. Without it, the model has to learn from genuine
+  leading indicators (pressure drop, humidity, terrain, historical
+  frequency) — which is also the honest situation a live forecast is in,
+  since forecast rainfall amounts for a specific hour aren't reliable
+  enough to trust either.
+- Absolute risk percentages run on the high side across the board
+  (especially in monsoon months) because of the small/imbalanced
+  training set — treat the **ranking** between districts as the
+  reliable signal, not the precise percentage.
 - **Urbanization and drainage-risk are proxies**, not real infrastructure
   data (see above). They're good enough for a working demo and to bias
   risk toward flood-prone flat/urban terrain, but not a substitute for

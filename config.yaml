@@ -13,6 +13,7 @@ data:
   terrain_dem_path: data/raw/terrain/dem.tif
   terrain_index_path: data/raw/terrain_index.csv
   climatology_path: data/processed/district_climatology.csv
+  waterways_path: data/raw/hotosm_pak_waterways_lines_geojson.geojson
   monitored_locations_path: data/processed/monitored_locations.csv
   processed_path: data/processed/cleaned.csv
   target_column: cloudburst_occurred
@@ -33,15 +34,19 @@ features:
     - urbanization_index
     - elevation
     - slope
-    - drainage_risk_index
+    - distance_to_waterway_km
+    - waterway_count_10km
     - historical_flood_freq
   categorical: []
 
 model:
   type: xgboost
   params:
-    n_estimators: 300
-    max_depth: 6
+    n_estimators: 150
+    max_depth: 3
     learning_rate: 0.05
-    scale_pos_weight: 10
+    scale_pos_weight: 3
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_lambda: 2.0
   save_path: models/cloudburst_model.pkl

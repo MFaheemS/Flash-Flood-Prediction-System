@@ -17,6 +17,7 @@ Horizons:
 from __future__ import annotations
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 import pandas as pd
@@ -26,9 +27,9 @@ from src.data.geo_reference import DISTRICT_TOWNS
 from src.data.load_data import load_config
 from src.data.terrain import attach_terrain, fetch_terrain_openmeteo, load_terrain_index
 from src.data.urbanization import build_urbanization_proxy
+from src.data.waterways import waterway_features
 from src.features.historical import (
-    attach_drainage_risk_index,
-    attach_historical_flood_freq,
+    historical_flood_freq,
     monthly_climatology_score,
 )
 from src.models.predict import predict
@@ -104,8 +105,14 @@ def _attach_static_features(df: pd.DataFrame, lat: float, lon: float, config: di
     urban = build_urbanization_proxy(point)
     df["urbanization_index"] = urban["urbanization_index"].iloc[0]
 
-    df = attach_historical_flood_freq(df, config["data"]["events_path"])
-    df = attach_drainage_risk_index(df)
+    # lat/lon is constant across every hourly row of a single location's
+    # forecast, so compute these once and broadcast rather than running
+    # the (row-wise) dataset-attach helpers, which would needlessly repeat
+    # the same expensive lookup ~384 times (once per forecast hour).
+    df["historical_flood_freq"] = historical_flood_freq(lat, lon, config["data"]["events_path"])
+    wf = waterway_features(lat, lon, config["data"]["waterways_path"])
+    df["distance_to_waterway_km"] = wf["distance_to_waterway_km"]
+    df["waterway_count_10km"] = wf["waterway_count_10km"]
     return df
 
 
@@ -154,7 +161,8 @@ def location_risk(name: str, lat: float, lon: float, config: dict) -> dict:
         "elevation": float(df["elevation"].iloc[0]) if len(df) else None,
         "urbanization_index": float(df["urbanization_index"].iloc[0]) if len(df) else None,
         "historical_flood_freq": float(df["historical_flood_freq"].iloc[0]) if len(df) else None,
-        "drainage_risk_index": float(df["drainage_risk_index"].iloc[0]) if len(df) else None,
+        "distance_to_waterway_km": float(df["distance_to_waterway_km"].iloc[0]) if len(df) else None,
+        "waterway_count_10km": int(df["waterway_count_10km"].iloc[0]) if len(df) else None,
     }
 
 
@@ -163,12 +171,22 @@ def all_locations_risk(horizon: str = "week") -> list[dict]:
     key_map = {"hour": "hour_risk", "day": "day_risk", "week": "week_risk", "month": "month_risk"}
     sort_key = key_map.get(horizon, "week_risk")
 
+    # Each location is an independent network call (weather forecast) plus
+    # some local computation; run them concurrently instead of one at a
+    # time, or a cold cache (e.g. right after a server restart) makes the
+    # dashboard take 60-100+ seconds to load a single tab.
     results = []
-    for name, town in DISTRICT_TOWNS.items():
-        try:
-            results.append(location_risk(name, town["lat"], town["lon"], config))
-        except Exception as exc:
-            print(f"Skipping {name}: {exc}")
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        futures = {
+            executor.submit(location_risk, name, town["lat"], town["lon"], config): name
+            for name, town in DISTRICT_TOWNS.items()
+        }
+        for future in as_completed(futures):
+            name = futures[future]
+            try:
+                results.append(future.result())
+            except Exception as exc:
+                print(f"Skipping {name}: {exc}")
 
     results.sort(key=lambda r: r[sort_key], reverse=True)
     return results
