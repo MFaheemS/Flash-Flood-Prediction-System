@@ -59,7 +59,7 @@ def _fetch_forecast_hourly(lat: float, lon: float, forecast_days: int = 16) -> p
             "forecast_days": forecast_days,
             "timezone": "UTC",
         },
-        timeout=30,
+        timeout=10,
     )
     resp.raise_for_status()
     hourly = resp.json()["hourly"]
@@ -181,12 +181,19 @@ def all_locations_risk(horizon: str = "week") -> list[dict]:
             executor.submit(location_risk, name, town["lat"], town["lon"], config): name
             for name, town in DISTRICT_TOWNS.items()
         }
-        for future in as_completed(futures):
-            name = futures[future]
-            try:
-                results.append(future.result())
-            except Exception as exc:
-                print(f"Skipping {name}: {exc}")
+        # Hard cap on total wait: a handful of slow/unresponsive upstream
+        # API calls must not be able to stall the whole dashboard load
+        # indefinitely. Whatever hasn't finished by the deadline is
+        # dropped (still running in the background, just not waited on).
+        try:
+            for future in as_completed(futures, timeout=60):
+                name = futures[future]
+                try:
+                    results.append(future.result(timeout=0))
+                except Exception as exc:
+                    print(f"Skipping {name}: {exc}")
+        except TimeoutError:
+            print(f"Timed out waiting for {len(futures) - len(results)} location(s); showing partial results")
 
     results.sort(key=lambda r: r[sort_key], reverse=True)
     return results

@@ -50,3 +50,48 @@ model:
     colsample_bytree: 0.8
     reg_lambda: 2.0
   save_path: models/cloudburst_model.pkl
+
+# Kaggle "Flood Prediction Dataset" (Playground Series S4E5) — 50k rows,
+# 20 named human/environmental factors against a continuous 0-1
+# FloodProbability target. Download train.csv from
+# https://www.kaggle.com/competitions/playground-series-s4e5/data and
+# place it at data.raw_path below. This is a *regression* target (unlike
+# the binary cloudburst_occurred above), trained/analyzed separately via
+# src/models/train_flood_factors.py and src/analysis/factor_impact.py
+# --dataset flood_factors.
+flood_factors:
+  raw_path: data/raw/flood_factors.csv
+  target_column: FloodProbability
+  test_size: 0.2
+  random_state: 42
+  features:
+    - MonsoonIntensity
+    - TopographyDrainage
+    - RiverManagement
+    - Deforestation
+    - Urbanization
+    - ClimateChange
+    - DamsQuality
+    - Siltation
+    - AgriculturalPractices
+    - Encroachments
+    - IneffectiveDisasterPreparedness
+    - DrainageSystems
+    - CoastalVulnerability
+    - Landslides
+    - Watersheds
+    - DeterioratingInfrastructure
+    - PopulationScore
+    - WetlandLoss
+    - InadequatePlanning
+    - PoliticalFactors
+  model:
+    type: xgboost_regressor
+    params:
+      n_estimators: 300
+      max_depth: 5
+      learning_rate: 0.05
+      subsample: 0.8
+      colsample_bytree: 0.8
+      reg_lambda: 2.0
+    save_path: models/flood_factors_model.pkl

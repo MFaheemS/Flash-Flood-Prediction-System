@@ -129,7 +129,7 @@ def fetch_terrain_openmeteo(
         lat_chunk = all_lats[i:i + batch_size]
         lon_chunk = all_lons[i:i + batch_size]
         last_exc = None
-        for attempt in range(5):
+        for attempt in range(2):
             try:
                 resp = requests.get(
                     api_url,
@@ -137,14 +137,14 @@ def fetch_terrain_openmeteo(
                         "latitude": ",".join(f"{v:.5f}" for v in lat_chunk),
                         "longitude": ",".join(f"{v:.5f}" for v in lon_chunk),
                     },
-                    timeout=30,
+                    timeout=8,
                 )
                 resp.raise_for_status()
                 elevations.extend(resp.json()["elevation"])
                 break
             except requests.RequestException as exc:
                 last_exc = exc
-                time.sleep(2.0 * (attempt + 1))
+                time.sleep(1.0)
         else:
             raise RuntimeError(f"Open-Meteo elevation API failed after retries: {last_exc}")
         if i + batch_size < len(all_lats):

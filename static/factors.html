@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>What Drives Flash-Flood Risk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 2rem; background: #0f1420; color: #e6e9ef; }
+  h1 { font-size: 1.4rem; margin-bottom: .25rem; }
+  p.sub { color: #9aa4b2; margin-top: 0; margin-bottom: 1.5rem; max-width: 70ch; line-height: 1.5; }
+  p.sub a { color: #7aa2ff; }
+  .tabs { display: flex; gap: .5rem; margin-bottom: 1.25rem; }
+  .tabs button { background: #1a2232; border: 1px solid #2a3448; color: #cdd6e3; padding: .5rem 1rem; border-radius: 8px; cursor: pointer; font-size: .9rem; }
+  .tabs button.active { background: #3b6fe0; border-color: #3b6fe0; color: white; }
+  .card { background: #141b29; border-radius: 10px; padding: 1.5rem 1.75rem 1.25rem; }
+  .legend { display: flex; gap: 1.5rem; margin-bottom: 1.25rem; font-size: .82rem; color: #9aa4b2; }
+  .legend span { display: inline-flex; align-items: center; gap: .4rem; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .row { display: grid; grid-template-columns: 220px 1fr 60px; align-items: center; gap: .75rem;
+    padding: .55rem 0; border-bottom: 1px solid #232d40; }
+  .row:last-child { border-bottom: none; }
+  .row .label { font-size: .87rem; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track { position: relative; height: 22px; }
+  .bar { position: absolute; top: 3px; height: 16px; border-radius: 0 4px 4px 0; transition: filter .12s; }
+  .row:hover .bar { filter: brightness(1.15); }
+  .pct { font-size: .82rem; color: #7f8ba0; text-align: right; font-variant-numeric: tabular-nums; }
+  .tooltip { position: fixed; pointer-events: none; background: #e6e9ef; color: #0f1420;
+    padding: .5rem .7rem; border-radius: 8px; font-size: .8rem; line-height: 1.4; opacity: 0; transition: opacity .1s;
+    z-index: 10; max-width: 260px; }
+  .tooltip.show { opacity: 1; }
+  #status { color: #9aa4b2; margin-bottom: 1rem; font-size: .85rem; }
+  .footnote { margin-top: 1.5rem; font-size: .78rem; color: #7f8ba0; line-height: 1.6; max-width: 72ch; }
+</style>
+</head>
+<body>
+  <h1>🔎 What Drives Flash-Flood Risk</h1>
+  <p class="sub">Mean absolute SHAP impact per factor, from the trained model — how much each input typically moves predicted risk, and in which direction.
+    <a href="/">← Back to district dashboard</a></p>
+
+  <div class="tabs">
+    <button data-dataset="cloudburst" class="active">Pakistan model (weather + terrain)</button>
+    <button data-dataset="flood_factors">Human/infrastructure factors (Kaggle)</button>
+  </div>
+
+  <div id="status">Loading…</div>
+
+  <div class="card">
+    <div class="legend">
+      <span><span class="swatch" style="background:#DC5B53"></span>Higher value → increases risk</span>
+      <span><span class="swatch" style="background:#3B82C4"></span>Higher value → decreases risk</span>
+    </div>
+    <div id="chart"></div>
+  </div>
+
+  <p class="footnote" id="footnote"></p>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const COLOR_INCREASE = "#DC5B53";
+const COLOR_DECREASE = "#3B82C4";
+let currentDataset = "cloudburst";
+
+async function load(dataset) {
+  document.getElementById("status").textContent = "Loading…";
+  document.querySelectorAll(".tabs button[data-dataset]").forEach(b => b.classList.toggle("active", b.dataset.dataset === dataset));
+  try {
+    const res = await fetch(`/api/factors?dataset=${dataset}`);
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    const data = await res.json();
+    render(data.factors, data.label);
+    document.getElementById("status").textContent = `${data.factors.length} factors ranked by impact on ${data.label}`;
+  } catch (err) {
+    document.getElementById("status").textContent = "Error: " + err.message;
+    document.getElementById("chart").innerHTML = "";
+  }
+}
+
+function render(factors, label) {
+  const chart = document.getElementById("chart");
+  const tooltip = document.getElementById("tooltip");
+  chart.innerHTML = "";
+  const maxImpact = Math.max(...factors.map(f => f.mean_abs_shap_impact));
+
+  factors.forEach(f => {
+    const row = document.createElement("div");
+    row.className = "row";
+    const color = f.direction === "increases risk" ? COLOR_INCREASE : COLOR_DECREASE;
+    const widthPct = (f.mean_abs_shap_impact / maxImpact) * 100;
+    row.innerHTML = `
+      <div class="label">${f.feature}</div>
+      <div class="track"><div class="bar" style="width:${widthPct}%; background:${color}"></div></div>
+      <div class="pct">${f.relative_importance_pct.toFixed(1)}%</div>
+    `;
+    row.addEventListener("mousemove", e => {
+      tooltip.innerHTML = `<strong>${f.feature}</strong><br>Rank #${f.rank}<br>${f.direction}<br>Mean |SHAP|: ${f.mean_abs_shap_impact.toFixed(4)}<br>Relative importance: ${f.relative_importance_pct.toFixed(1)}%`;
+      tooltip.style.left = (e.clientX + 14) + "px";
+      tooltip.style.top = (e.clientY + 14) + "px";
+      tooltip.classList.add("show");
+    });
+    row.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+    chart.appendChild(row);
+  });
+
+  document.getElementById("footnote").textContent =
+    currentDataset === "cloudburst"
+      ? "Trained on 600 historical-event-derived samples for Pakistan (150 real cloudburst events + 450 negative samples), 14 engineered weather/terrain/drainage features. SHAP direction is a correlation-based estimate — treat as indicative, not absolute, at this sample size."
+      : "Trained on the Kaggle Flood Prediction Dataset (Playground Series S4E5) — up to 50,000 rows of named human/infrastructure factors against a continuous flood-probability target. Direction still uses the same correlation-based estimate.";
+}
+
+document.querySelectorAll(".tabs button[data-dataset]").forEach(btn => {
+  btn.addEventListener("click", () => { currentDataset = btn.dataset.dataset; load(currentDataset); });
+});
+
+load(currentDataset);
+</script>
+</body>
+</html>
