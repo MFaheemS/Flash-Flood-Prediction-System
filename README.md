@@ -118,19 +118,3 @@ python -m src.models.train_model
 - Open-Meteo's forecast is only reliable ~16 days out; the "month"
   horizon beyond that is climatological, not a real forecast.
 
-## What you need to do manually
-
-1. **Nothing to get it running** — the trained model, terrain cache, and
-   urbanization data are already built and committed; `uvicorn src.app:app`
-   just works.
-2. **If you want materially better accuracy**, the single highest-value
-   thing you could add yourself is more/better historical event data —
-   extend `CLOUDPAK25_2010_2025_v3.csv` with more verified past
-   cloudburst/flash-flood events (more rows = less overfitting risk) or
-   swap the urbanization/drainage proxies for real data if you can get
-   an account for GHSL/WorldPop (Google Earth Engine) or a real
-   municipal drainage-infrastructure dataset for your area of interest.
-3. **If you want to deploy this publicly** (not just run locally), you'd
-   need to host it yourself (e.g. a small VM or PaaS) — I haven't
-   provisioned any hosting/domain, since that involves an account and
-   possibly billing that only you can authorize.
