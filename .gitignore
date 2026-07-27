@@ -9,3 +9,4 @@ data/processed/*
 models/*.pkl
 models/*.h5
 .env
+docs/LOVABLE_PROMPT.md

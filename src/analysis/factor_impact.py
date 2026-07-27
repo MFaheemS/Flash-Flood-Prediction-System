@@ -60,7 +60,26 @@ def _load_flood_factors():
     return model, df, fc["features"], "flood probability"
 
 
-LOADERS = {"cloudburst": _load_cloudburst, "flood_factors": _load_flood_factors}
+def _load_global_flood():
+    config = load_config()
+    gf = config["global_flood"]
+    if not os.path.exists(gf["raw_path"]):
+        raise FileNotFoundError(
+            f"{gf['raw_path']} not found. Run `python -m src.data.global_events`, "
+            "`python -m src.data.build_global_dataset`, "
+            "`python -m src.data.enrich_global_dataset`, and "
+            "`python -m src.models.train_global_model` first."
+        )
+    model = joblib.load(gf["model"]["save_path"])
+    df = pd.read_csv(gf["raw_path"])
+    return model, df, gf["features"], "global flash-flood risk"
+
+
+LOADERS = {
+    "cloudburst": _load_cloudburst,
+    "flood_factors": _load_flood_factors,
+    "global_flood": _load_global_flood,
+}
 
 
 def compute_factor_impact(dataset: str = "cloudburst") -> tuple[pd.DataFrame, str]:
@@ -133,7 +152,7 @@ def save_chart(result: pd.DataFrame, out_path: str, label: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=["cloudburst", "flood_factors"], default="cloudburst")
+    parser.add_argument("--dataset", choices=["cloudburst", "flood_factors", "global_flood"], default="cloudburst")
     args = parser.parse_args()
 
     result, label = compute_factor_impact(args.dataset)

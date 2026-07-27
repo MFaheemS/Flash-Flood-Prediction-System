@@ -10,6 +10,8 @@ import pandas as pd
 
 from src.data.load_data import load_config
 from src.data.terrain import attach_terrain, fetch_terrain_openmeteo
+from src.data.soil import attach_soil_clay_pct
+from src.data.soil_moisture import attach_soil_wetness
 from src.data.urbanization import build_urbanization_proxy
 from src.data.waterways import attach_waterway_features
 from src.features.historical import attach_historical_flood_freq
@@ -35,6 +37,12 @@ def enrich():
 
     print("Computing waterway distance/density...")
     df = attach_waterway_features(df, config["data"]["waterways_path"])
+
+    print("Fetching soil clay % (ISRIC SoilGrids)...")
+    df = attach_soil_clay_pct(df)
+
+    print(f"Fetching antecedent soil wetness (NASA POWER) for {len(df)} dated rows...")
+    df = attach_soil_wetness(df)
 
     df.to_csv(raw_path, index=False)
     print(f"Saved enriched dataset ({len(df)} rows, {len(df.columns)} columns) to {raw_path}")

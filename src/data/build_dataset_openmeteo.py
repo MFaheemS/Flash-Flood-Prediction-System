@@ -104,7 +104,12 @@ def build_positive_rows(config: dict) -> pd.DataFrame:
         row = _row_from_day(day_df)
         if row is None:
             continue
-        row["rainfall"] = ev["peak_rainfall_mm_per_hr"]  # trust recorded ground truth over reanalysis grid
+        # trust a recorded ground-truth rainfall rate over the reanalysis grid when we
+        # have one (CLOUDPAK25); DFO events have no recorded rate, so keep the
+        # reanalysis-derived value already in `row` from _row_from_day
+        recorded_rainfall = ev.get("peak_rainfall_mm_per_hr")
+        if pd.notna(recorded_rainfall):
+            row["rainfall"] = recorded_rainfall
         row["lat"] = ev["latitude"]
         row["lon"] = ev["longitude"]
         row["district"] = ev["district"]

@@ -6,7 +6,7 @@ region:
   lon_max: 77.0
 
 data:
-  events_path: CLOUDPAK25_2010_2025_v3.csv
+  events_path: data/raw/all_flood_events.csv
   raw_path: data/raw/cloudburst_dataset.csv
   era5_dir: data/raw/era5/
   urbanization_path: data/raw/urbanization_index.csv
@@ -37,6 +37,9 @@ features:
     - distance_to_waterway_km
     - waterway_count_10km
     - historical_flood_freq
+    - soil_clay_pct
+    - soil_moisture_root
+    - soil_moisture_surface
   categorical: []
 
 model:
@@ -95,3 +98,41 @@ flood_factors:
       colsample_bytree: 0.8
       reg_lambda: 2.0
     save_path: models/flood_factors_model.pkl
+
+# Global rain-driven flood events (Dartmouth Flood Observatory global
+# archive, 600-event stratified sample across ~400 countries, 1985-2010)
+# -- see src/data/global_events.py and src/data/build_global_dataset.py.
+# Purpose: find which weather/terrain/soil factors matter for flash
+# floods *in general*, independent of Pakistan-specific proxies
+# (urbanization gravity model, HOTOSM waterways, historical district
+# frequency aren't globally available), then compare against the
+# Pakistan-specific model's findings.
+global_flood:
+  raw_path: data/raw/global_flood_dataset.csv
+  target_column: cloudburst_occurred
+  test_size: 0.2
+  random_state: 42
+  features:
+    - temperature
+    - humidity
+    - pressure
+    - pressure_drop_3h
+    - wind_speed
+    - dew_point
+    - cloud_cover
+    - temp_dewpoint_spread
+    - elevation
+    - slope
+    - soil_clay_pct
+    - soil_moisture_root
+    - soil_moisture_surface
+  model:
+    params:
+      n_estimators: 150
+      max_depth: 3
+      learning_rate: 0.05
+      scale_pos_weight: 3
+      subsample: 0.8
+      colsample_bytree: 0.8
+      reg_lambda: 2.0
+    save_path: models/global_flood_model.pkl

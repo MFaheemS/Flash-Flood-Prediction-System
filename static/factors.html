@@ -40,6 +40,7 @@
 
   <div class="tabs">
     <button data-dataset="cloudburst" class="active">Pakistan model (weather + terrain)</button>
+    <button data-dataset="global_flood">Global model (600 events, ~400 countries)</button>
     <button data-dataset="flood_factors">Human/infrastructure factors (Kaggle)</button>
   </div>
 
@@ -103,10 +104,12 @@ function render(factors, label) {
     chart.appendChild(row);
   });
 
-  document.getElementById("footnote").textContent =
-    currentDataset === "cloudburst"
-      ? "Trained on 600 historical-event-derived samples for Pakistan (150 real cloudburst events + 450 negative samples), 14 engineered weather/terrain/drainage features. SHAP direction is a correlation-based estimate — treat as indicative, not absolute, at this sample size."
-      : "Trained on the Kaggle Flood Prediction Dataset (Playground Series S4E5) — up to 50,000 rows of named human/infrastructure factors against a continuous flood-probability target. Direction still uses the same correlation-based estimate.";
+  const FOOTNOTES = {
+    cloudburst: "Trained on historical-event-derived samples for Pakistan (206 real events spanning 1988-2025, from CLOUDPAK25 + the Dartmouth Flood Observatory archive) plus negative samples, 17 engineered weather/terrain/drainage/soil features. SHAP direction is a correlation-based estimate — treat as indicative, not absolute, at this sample size.",
+    global_flood: "Trained on a 600-event stratified sample of rain-driven floods from the Dartmouth Flood Observatory global archive (~400 countries, 1985-2010) plus negative samples — weather/terrain/soil features only (no Pakistan-specific urbanization/waterway/historical proxies, since those aren't available globally), so this is directly comparable to what's physically measurable anywhere.",
+    flood_factors: "Trained on the Kaggle Flood Prediction Dataset (Playground Series S4E5) — up to 50,000 rows of named human/infrastructure factors against a continuous flood-probability target. Direction still uses the same correlation-based estimate.",
+  };
+  document.getElementById("footnote").textContent = FOOTNOTES[currentDataset] || "";
 }
 
 document.querySelectorAll(".tabs button[data-dataset]").forEach(btn => {

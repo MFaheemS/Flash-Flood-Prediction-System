@@ -26,6 +26,8 @@ import requests
 from src.data.geo_reference import DISTRICT_TOWNS
 from src.data.load_data import load_config
 from src.data.terrain import attach_terrain, fetch_terrain_openmeteo, load_terrain_index
+from src.data.soil import fetch_clay_pct
+from src.data.soil_moisture import fetch_recent_soil_wetness
 from src.data.urbanization import build_urbanization_proxy
 from src.data.waterways import waterway_features
 from src.features.historical import (
@@ -44,6 +46,15 @@ HOURLY_VARS = [
     "wind_speed_10m",
     "precipitation",
 ]
+
+def _safe_float(value):
+    """float() but NaN -> None, so the value survives JSON serialization."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    return None if np.isnan(f) else f
+
 
 _cache: dict[str, tuple[float, pd.DataFrame]] = {}
 CACHE_TTL_SECONDS = 30 * 60
@@ -113,6 +124,10 @@ def _attach_static_features(df: pd.DataFrame, lat: float, lon: float, config: di
     wf = waterway_features(lat, lon, config["data"]["waterways_path"])
     df["distance_to_waterway_km"] = wf["distance_to_waterway_km"]
     df["waterway_count_10km"] = wf["waterway_count_10km"]
+    df["soil_clay_pct"] = fetch_clay_pct(lat, lon)
+    wetness = fetch_recent_soil_wetness(lat, lon)
+    df["soil_moisture_root"] = wetness["soil_moisture_root"]
+    df["soil_moisture_surface"] = wetness["soil_moisture_surface"]
     return df
 
 
@@ -163,6 +178,9 @@ def location_risk(name: str, lat: float, lon: float, config: dict) -> dict:
         "historical_flood_freq": float(df["historical_flood_freq"].iloc[0]) if len(df) else None,
         "distance_to_waterway_km": float(df["distance_to_waterway_km"].iloc[0]) if len(df) else None,
         "waterway_count_10km": int(df["waterway_count_10km"].iloc[0]) if len(df) else None,
+        "soil_clay_pct": _safe_float(df["soil_clay_pct"].iloc[0]) if len(df) else None,
+        "soil_moisture_root": _safe_float(df["soil_moisture_root"].iloc[0]) if len(df) else None,
+        "soil_moisture_surface": _safe_float(df["soil_moisture_surface"].iloc[0]) if len(df) else None,
     }
 
 
