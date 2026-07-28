@@ -125,11 +125,12 @@ def fetch_terrain_openmeteo(
         all_lons += [lon, lon, lon, lon + offset_deg, lon - offset_deg]
 
     elevations = []
+    n_batches = (len(all_lats) + batch_size - 1) // batch_size
     for i in range(0, len(all_lats), batch_size):
         lat_chunk = all_lats[i:i + batch_size]
         lon_chunk = all_lons[i:i + batch_size]
         last_exc = None
-        for attempt in range(4):
+        for attempt in range(6):
             try:
                 resp = requests.get(
                     api_url,
@@ -137,11 +138,11 @@ def fetch_terrain_openmeteo(
                         "latitude": ",".join(f"{v:.5f}" for v in lat_chunk),
                         "longitude": ",".join(f"{v:.5f}" for v in lon_chunk),
                     },
-                    timeout=8,
+                    timeout=10,
                 )
                 if resp.status_code == 429:
-                    # rate-limited: back off longer, respecting Retry-After if given
-                    wait = float(resp.headers.get("Retry-After", 5 * (attempt + 1)))
+                    # rate-limited: back off (exponential), respecting Retry-After if given
+                    wait = float(resp.headers.get("Retry-After", min(30, 4 * 2 ** attempt)))
                     time.sleep(wait)
                     last_exc = requests.HTTPError("429 Too Many Requests")
                     continue
@@ -150,9 +151,13 @@ def fetch_terrain_openmeteo(
                 break
             except requests.RequestException as exc:
                 last_exc = exc
-                time.sleep(2.0 * (attempt + 1))
+                time.sleep(min(30, 3.0 * 2 ** attempt))
         else:
-            raise RuntimeError(f"Open-Meteo elevation API failed after retries: {last_exc}")
+            # A large point sweep must not lose all prior work to one bad
+            # batch under sustained rate limiting: fill this batch with NaN
+            # (those rows get dropped at training) and keep going.
+            print(f"  terrain batch {i // batch_size + 1}/{n_batches} failed ({last_exc}); filling NaN")
+            elevations.extend([np.nan] * len(lat_chunk))
         if i + batch_size < len(all_lats):
             time.sleep(1.0)
 

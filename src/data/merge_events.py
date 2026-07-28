@@ -41,34 +41,37 @@ def _nearest_district(lat: float, lon: float) -> str:
     return best
 
 
-def merge_events() -> pd.DataFrame:
-    cp = pd.read_csv(CLOUDPAK_PATH)
-    cp_out = pd.DataFrame({
-        "event_id": cp["event_id"],
-        "date": pd.to_datetime(cp["date"]),
-        "district": cp["district"],
-        "latitude": cp["latitude"],
-        "longitude": cp["longitude"],
-        "peak_rainfall_mm_per_hr": cp["peak_rainfall_mm_per_hr"],
-        "source": "CLOUDPAK25",
-    })
+# CLOUDPAK25 is intentionally EXCLUDED: its dates are synthetic (spread flat
+# across all 12 months, ~36% monsoon vs DFO's realistic 82%) AND its
+# coordinates are fabricated (Karachi placed ~800km inland), so it was
+# poisoning every event-based model and feature. Only real, valid-coordinate
+# DFO events are kept.
+REGION_BBOX = dict(lat_min=23.5, lat_max=37.5, lon_min=60.5, lon_max=77.0)
 
+
+def merge_events() -> pd.DataFrame:
     dfo = pd.read_csv(DFO_PATH)
     dfo["began"] = pd.to_datetime(dfo["began"])
-    dfo_out = pd.DataFrame({
+
+    lat, lon = dfo["centroid_lat"], dfo["centroid_lon"]
+    valid = (
+        lat.between(REGION_BBOX["lat_min"], REGION_BBOX["lat_max"])
+        & lon.between(REGION_BBOX["lon_min"], REGION_BBOX["lon_max"])
+    )
+    dfo = dfo[valid].reset_index(drop=True)
+
+    merged = pd.DataFrame({
         "event_id": ["DFO_" + d.strftime("%Y%m%d") + f"_{i}" for i, d in enumerate(dfo["began"])],
         "date": dfo["began"],
-        "district": [_nearest_district(lat, lon) for lat, lon in zip(dfo["centroid_lat"], dfo["centroid_lon"])],
+        "district": [_nearest_district(la, lo) for la, lo in zip(dfo["centroid_lat"], dfo["centroid_lon"])],
         "latitude": dfo["centroid_lat"],
         "longitude": dfo["centroid_lon"],
         "peak_rainfall_mm_per_hr": np.nan,  # not recorded; fall back to reanalysis at build time
         "source": "DFO",
-    })
+    }).sort_values("date").reset_index(drop=True)
 
-    merged = pd.concat([cp_out, dfo_out], ignore_index=True)
-    merged = merged.sort_values("date").reset_index(drop=True)
     merged.to_csv(OUT_PATH, index=False)
-    print(f"Saved {len(merged)} events ({len(cp_out)} CLOUDPAK25 + {len(dfo_out)} DFO) to {OUT_PATH}")
+    print(f"Saved {len(merged)} real DFO events (CLOUDPAK25 dropped as synthetic) to {OUT_PATH}")
     print(f"Date range: {merged['date'].min().date()} to {merged['date'].max().date()}")
     return merged
 

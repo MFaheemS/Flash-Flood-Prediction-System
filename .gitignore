@@ -2,11 +2,35 @@ venv/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Generated / large data (rebuildable from scripts)
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 models/*.pkl
 models/*.h5
+reports/*.png
+
+# Raw source datasets (large; download/export separately — see docs/)
+Datasets/
+sf/
+*.zip
+cloudpredictionsystemproject.csv
+CLOUDPAK25_2010_2025_v3.csv
+
+# Large media — weather background videos (hundreds of MB)
+Weather vids/
+Lovable frontend/public/videos/
+
+# Frontend build + deps (Lovable frontend has its own .gitignore too)
+Lovable frontend/node_modules/
+Lovable frontend/dist/
+Lovable frontend/.output/
+
+# Env / secrets
 .env
+*.local
+
+# Internal-only docs
 docs/LOVABLE_PROMPT.md

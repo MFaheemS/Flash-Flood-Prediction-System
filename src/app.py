@@ -30,7 +30,7 @@ from src.analysis.factor_impact import compute_factor_impact
 from src.data.current_weather import get_current_weather
 from src.data.geo_reference import DISTRICT_TOWNS
 from src.data.load_data import load_config
-from src.models.risk_engine import all_locations_risk, location_risk
+from src.models.district_risk import all_district_risk, district_risk
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -53,7 +53,7 @@ _snapshot: dict = {"locations": [], "computed_at": None, "error": None}
 _snapshot_lock = threading.Lock()
 
 HORIZON_KEYS = {"hour": "hour_risk", "day": "day_risk", "week": "week_risk", "month": "month_risk"}
-DATASETS = {"cloudburst", "flood_factors", "global_flood"}
+DATASETS = {"cloudburst", "flood_factors", "satellite_flood", "district_flood"}
 
 
 # --------------------------------------------------------------------------- #
@@ -64,7 +64,7 @@ def _refresh_loop():
         try:
             logger.info("Refreshing district risk snapshot...")
             t0 = time.time()
-            locations = all_locations_risk("week")  # base sort; API re-sorts per horizon
+            locations = all_district_risk("week")  # district satellite model; API re-sorts per horizon
             with _snapshot_lock:
                 _snapshot["locations"] = locations
                 _snapshot["computed_at"] = time.time()
@@ -109,14 +109,15 @@ def api_meta():
     return {
         "name": "Flash Flood Risk",
         "horizons": [
-            {"id": "hour", "label": "Next hour"},
-            {"id": "day", "label": "Next 24 hours"},
+            {"id": "hour", "label": "Next 24 hours"},
+            {"id": "day", "label": "Next 3 days"},
             {"id": "week", "label": "Next 7 days"},
-            {"id": "month", "label": "Next 30 days"},
+            {"id": "month", "label": "Next 16 days"},
         ],
         "factor_datasets": [
+            {"id": "district_flood", "label": "District satellite model (119 districts, real labels, AUC 0.93)"},
+            {"id": "satellite_flood", "label": "Province satellite model (real labels, incl. snow & vegetation)"},
             {"id": "cloudburst", "label": "Pakistan model (weather + terrain + soil)"},
-            {"id": "global_flood", "label": "Global model (600 events, ~400 countries)"},
             {"id": "flood_factors", "label": "Human/infrastructure factors (Kaggle)"},
         ],
         "monitored_districts": district_count or len(DISTRICT_TOWNS),
@@ -169,11 +170,11 @@ def api_risk(horizon: str = "week"):
 @app.get("/api/risk/point")
 def api_risk_point(lat: float, lon: float, name: str = "custom"):
     """Risk for an arbitrary lat/lon (e.g. the user's current location or a
-    dropped map pin), across all four horizons, with the underlying
-    terrain/soil/drainage feature values."""
-    config = load_config()
+    dropped map pin), across all four horizons, from the district satellite
+    model (forecast rainfall + climatology; forecast-rainfall fallback for
+    points with no satellite climatology)."""
     try:
-        return location_risk(name, lat, lon, config)
+        return district_risk(name, lat, lon)
     except FileNotFoundError as exc:
         raise HTTPException(503, f"Model not trained yet: {exc}")
 

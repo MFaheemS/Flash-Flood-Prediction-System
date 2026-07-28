@@ -207,7 +207,12 @@ def all_locations_risk(horizon: str = "week") -> list[dict]:
             for future in as_completed(futures, timeout=60):
                 name = futures[future]
                 try:
-                    results.append(future.result(timeout=0))
+                    result = future.result(timeout=0)
+                    # attach the district's province (known from the static
+                    # watchlist) so the frontend can show it without a second
+                    # lookup — location_risk itself is location-agnostic.
+                    result["province"] = DISTRICT_TOWNS[name].get("province")
+                    results.append(result)
                 except Exception as exc:
                     print(f"Skipping {name}: {exc}")
         except TimeoutError:

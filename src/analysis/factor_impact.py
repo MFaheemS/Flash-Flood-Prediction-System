@@ -75,10 +75,40 @@ def _load_global_flood():
     return model, df, gf["features"], "global flash-flood risk"
 
 
+def _load_satellite_flood():
+    config = load_config()
+    sf = config["satellite_flood"]
+    if not os.path.exists(sf["model"]["save_path"]):
+        raise FileNotFoundError(
+            f"{sf['model']['save_path']} not found. Run "
+            "`python -m src.data.build_satellite_dataset` then "
+            "`python -m src.models.train_satellite_model` first."
+        )
+    model = joblib.load(sf["model"]["save_path"])
+    df = pd.read_csv(sf["raw_path"])
+    return model, df, sf["features"], "monthly flood risk (satellite)"
+
+
+def _load_district_flood():
+    config = load_config()
+    dc = config["district_flood"]
+    if not os.path.exists(dc["model"]["save_path"]):
+        raise FileNotFoundError(
+            f"{dc['model']['save_path']} not found. Run "
+            "`python -m src.data.build_district_dataset` then "
+            "`python -m src.models.train_district_model` first."
+        )
+    model = joblib.load(dc["model"]["save_path"])
+    df = pd.read_csv(dc["raw_path"])
+    return model, df, dc["features"], "district monthly flood risk"
+
+
 LOADERS = {
     "cloudburst": _load_cloudburst,
     "flood_factors": _load_flood_factors,
     "global_flood": _load_global_flood,
+    "satellite_flood": _load_satellite_flood,
+    "district_flood": _load_district_flood,
 }
 
 
@@ -152,7 +182,7 @@ def save_chart(result: pd.DataFrame, out_path: str, label: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=["cloudburst", "flood_factors", "global_flood"], default="cloudburst")
+    parser.add_argument("--dataset", choices=["cloudburst", "flood_factors", "global_flood", "satellite_flood", "district_flood"], default="cloudburst")
     args = parser.parse_args()
 
     result, label = compute_factor_impact(args.dataset)

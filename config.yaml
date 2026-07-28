@@ -136,3 +136,68 @@ global_flood:
       colsample_bytree: 0.8
       reg_lambda: 2.0
     save_path: models/global_flood_model.pkl
+
+# Satellite monthly flood panel for 6 Pakistani regions (2000-2021), built
+# from user-provided Google Earth Engine exports in Datasets/ -- see
+# src/data/build_satellite_dataset.py. REAL flood labels (60 flood-months)
+# with naturally-matched negatives (same regions, non-flood months), and two
+# physical factors absent from every other model: snow cover (NDSI) and
+# vegetation (NDVI). Reported with cross-validated AUC + probability
+# calibration, since a plain imbalanced fit reads risk too high everywhere.
+satellite_flood:
+  raw_path: data/raw/satellite_flood_dataset.csv
+  target_column: flood
+  random_state: 42
+  features:
+    - precip_total
+    - precip_max
+    - precip_days
+    - precip_prev_month
+    - temp_mean
+    - temp_max
+    - snow_mean
+    - snow_max
+    - veg_mean
+    - month
+    - soil_moist_surface
+    - soil_moist_root
+    - soil_moist_prev_month
+  model:
+    params:
+      n_estimators: 200
+      max_depth: 3
+      learning_rate: 0.05
+      scale_pos_weight: 8
+      subsample: 0.8
+      colsample_bytree: 0.8
+      reg_lambda: 2.0
+    save_path: models/satellite_flood_model.pkl
+
+# District-level satellite monthly flood panel (119 Pakistan districts,
+# 2000-2021, ~31k district-months, 126 real flood-months), built from the
+# GEE monthly exports in sf/ (build_district_dataset.py) with labels from
+# CLOUDPAK25 + DFO event records. The district-resolution upgrade of the
+# province satellite model -- more rows, more positives, finer geography.
+district_flood:
+  raw_path: data/raw/district_flood_dataset.csv
+  target_column: flood
+  random_state: 42
+  features:
+    - precip_total
+    - precip_max
+    - precip_prev_month
+    - temp_mean
+    - snow_mean
+    - veg_mean
+    - veg_trend
+    - month
+  model:
+    params:
+      n_estimators: 250
+      max_depth: 3
+      learning_rate: 0.05
+      scale_pos_weight: 40
+      subsample: 0.8
+      colsample_bytree: 0.8
+      reg_lambda: 2.0
+    save_path: models/district_flood_model.pkl

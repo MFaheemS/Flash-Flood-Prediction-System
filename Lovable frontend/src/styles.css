@@ -1,0 +1,190 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-risk-very-high: var(--risk-very-high);
+  --color-risk-high: var(--risk-high);
+  --color-risk-moderate: var(--risk-moderate);
+  --color-risk-low: var(--risk-low);
+  --color-risk-decrease: var(--risk-decrease);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
+}
+
+:root {
+  --radius: 1rem;
+
+  /* Dark-first cinematic weather theme */
+  --background: oklch(0.16 0.02 250);
+  --foreground: oklch(0.98 0.005 250);
+  --card: oklch(0.22 0.02 250);
+  --card-foreground: oklch(0.98 0.005 250);
+  --popover: oklch(0.2 0.02 250);
+  --popover-foreground: oklch(0.98 0.005 250);
+  --primary: oklch(0.75 0.15 235);
+  --primary-foreground: oklch(0.15 0.02 250);
+  --secondary: oklch(0.3 0.03 250);
+  --secondary-foreground: oklch(0.98 0.005 250);
+  --muted: oklch(0.28 0.02 250);
+  --muted-foreground: oklch(0.72 0.02 250);
+  --accent: oklch(0.35 0.04 240);
+  --accent-foreground: oklch(0.98 0.005 250);
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.98 0.005 250);
+  --border: oklch(1 0 0 / 0.14);
+  --input: oklch(1 0 0 / 0.15);
+  --ring: oklch(0.75 0.15 235);
+
+  /* Risk color system — matches spec */
+  --risk-very-high: #e5484d;
+  --risk-high: #f76808;
+  --risk-moderate: #f5d90a;
+  --risk-low: #46a758;
+  --risk-decrease: #3b82c4;
+
+  /* Glass — translucent dark tint so the weather video shows through a little
+     while white text stays clearly readable */
+  --glass-bg: rgba(14, 19, 28, 0.62);
+  --glass-bg-strong: rgba(14, 19, 28, 0.74);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.55);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  html {
+    color-scheme: dark;
+  }
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@utility glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(7px) saturate(135%);
+  -webkit-backdrop-filter: blur(7px) saturate(135%);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+}
+
+@utility glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Opaque panel — for the top nav (should not be see-through) */
+@utility solid-panel {
+  background: #0d1119;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Calm static "weather app" backdrop for info pages (Factors, About) that
+   should NOT use a live weather video */
+@utility app-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background:
+    radial-gradient(1200px 600px at 15% -5%, rgba(59, 130, 196, 0.35), transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, rgba(70, 167, 88, 0.18), transparent 55%),
+    linear-gradient(180deg, #0f1826 0%, #0b111b 55%, #090d15 100%);
+}
+
+@utility text-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Animated gradient fallback backgrounds per condition */
+@keyframes drift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 0%; }
+}
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.grad-clear-day { background: linear-gradient(135deg, #f6b26b, #7ec8f2, #3b7dd8); background-size: 200% 200%; animation: drift 22s ease-in-out infinite; }
+.grad-clear-night { background: linear-gradient(160deg, #0b1a3a, #142657, #05080f); background-size: 200% 200%; animation: drift 26s ease-in-out infinite; }
+.grad-clouds { background: linear-gradient(160deg, #4a5b6e, #8fa0b3, #2f3a48); background-size: 200% 200%; animation: drift 24s ease-in-out infinite; }
+.grad-fog { background: linear-gradient(180deg, #6b7684, #b3bcc7, #4a535e); background-size: 200% 200%; animation: drift 30s ease-in-out infinite; }
+.grad-rain { background: linear-gradient(160deg, #1f3a5f, #3a5f88, #0e1f36); background-size: 200% 200%; animation: drift 18s ease-in-out infinite; }
+.grad-snow { background: linear-gradient(160deg, #cfd8e3, #8ea3bd, #eaf1fa); background-size: 200% 200%; animation: drift 26s ease-in-out infinite; }
+.grad-storm { background: linear-gradient(160deg, #0a0f1f, #2a1a4a, #050810); background-size: 200% 200%; animation: drift 14s ease-in-out infinite; }
+
+/* Shimmer skeleton */
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.8s infinite linear;
+}
+
+/* Leaflet dark tweaks */
+.leaflet-container { background: transparent !important; font-family: var(--font-sans); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: rgba(20, 25, 40, 0.85) !important;
+  color: #fff !important;
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.4) !important;
+  color: #cbd5e1 !important;
+}
+.leaflet-control-attribution a { color: #93c5fd !important; }
