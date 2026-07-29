@@ -1,10 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Droplets, Map, BarChart3, Info, Home, Menu, X } from "lucide-react";
+import { Droplets, Map, BarChart3, Info, Home, List, Clapperboard, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const links = [
   { to: "/", label: "Home", icon: Home },
   { to: "/map", label: "Map", icon: Map },
+  { to: "/districts", label: "Districts", icon: List },
+  { to: "/explore", label: "Explore", icon: Clapperboard },
   { to: "/factors", label: "Factors", icon: BarChart3 },
   { to: "/about", label: "About", icon: Info },
 ] as const;
@@ -14,7 +16,7 @@ export function Nav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4">
+    <header className="sticky top-0 z-[1200] px-4 pt-4">
       <nav className="solid-panel mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <div

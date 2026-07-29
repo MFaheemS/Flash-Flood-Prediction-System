@@ -52,10 +52,7 @@ function MapPage() {
 
   return (
     <>
-      <WeatherBackground
-        condition={weather.data?.condition}
-        isDay={weather.data?.is_day ?? true}
-      />
+      <WeatherBackground weather={weather.data} />
       <Nav />
 
       <main className="mx-auto max-w-7xl px-4 pt-8 pb-16">

@@ -117,8 +117,7 @@ def api_meta():
         "factor_datasets": [
             {"id": "district_flood", "label": "District satellite model (119 districts, real labels, AUC 0.93)"},
             {"id": "satellite_flood", "label": "Province satellite model (real labels, incl. snow & vegetation)"},
-            {"id": "cloudburst", "label": "Pakistan model (weather + terrain + soil)"},
-            {"id": "flood_factors", "label": "Human/infrastructure factors (Kaggle)"},
+            {"id": "cloudburst", "label": "Weather/terrain model (real DFO events)"},
         ],
         "monitored_districts": district_count or len(DISTRICT_TOWNS),
         "risk_computed_at": computed_at,

@@ -13,8 +13,9 @@ import {
 import { api, type FactorItem } from "@/lib/api";
 import { formatFactor } from "@/lib/risk";
 import { Nav } from "@/components/Nav";
+import { AppBackdrop } from "@/components/AppBackdrop";
 
-type Dataset = "district_flood" | "satellite_flood" | "cloudburst" | "flood_factors";
+type Dataset = "district_flood" | "satellite_flood" | "cloudburst";
 
 const DATASETS: {
   id: Dataset;
@@ -26,7 +27,7 @@ const DATASETS: {
     id: "district_flood",
     label: "District satellite model",
     short: "District",
-    note: "Satellite features for all 119 Pakistani districts (monthly, 2000–2021), labelled from real curated province flood records disaggregated to the districts that caught the storm. Best-performing model (cross-validated AUC ≈ 0.93). Note: since labels were placed using a rainfall threshold, the rainfall factors' weight is partly by construction — but the top driver is time-of-year (monsoon seasonality), which is learned independently.",
+    note: "Satellite features for all 119 Pakistani districts (monthly, 2000–2021), labelled from real curated province flood records disaggregated to the districts that caught the storm. Best-performing model (cross-validated AUC ≈ 0.93). Includes a real human-impact factor — deforestation/urban expansion, measured as each district's 20-year vegetation (NDVI) trend, where losing vegetation increases risk. Note: since labels were placed using a rainfall threshold, the rainfall factors' weight is partly by construction — but the top driver is time-of-year (monsoon seasonality), learned independently.",
   },
   {
     id: "satellite_flood",
@@ -36,15 +37,9 @@ const DATASETS: {
   },
   {
     id: "cloudburst",
-    label: "Pakistan model",
-    short: "Pakistan",
-    note: "Trained on 206 real Pakistan flood events (1988–2025) plus negatives, with 17 weather, terrain, drainage, and soil features.",
-  },
-  {
-    id: "flood_factors",
-    label: "Human factors",
-    short: "Human",
-    note: "Kaggle Flood Prediction Dataset — ~1.1M rows of named human/infrastructure factors. Note: this is a synthetic dataset whose target is essentially the sum of all factors, so every factor scores ~equally (≈5%). Useful as a checklist of factors, not for ranking their real-world importance.",
+    label: "Weather/terrain model",
+    short: "Weather",
+    note: "Forecast-style model trained on real DFO flood events with weather, terrain, soil, drainage-proxy and urbanization features. Small real-event sample, so treat as indicative. Human land-use impact appears here as urbanization and in the district model as deforestation (20-yr vegetation trend).",
   },
 ];
 
@@ -89,7 +84,7 @@ function FactorsPage() {
 
   return (
     <>
-      <div className="app-backdrop" />
+      <AppBackdrop />
       <Nav />
 
       <main className="mx-auto max-w-6xl px-4 pt-8 pb-24">

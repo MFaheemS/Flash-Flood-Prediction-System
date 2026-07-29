@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as DistrictsRouteImport } from './routes/districts'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FactorsRouteImport } from './routes/factors'
 import { Route as LocationRouteImport } from './routes/location'
 import { Route as MapRouteImport } from './routes/map'
@@ -23,6 +25,16 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DistrictsRoute = DistrictsRouteImport.update({
+  id: '/districts',
+  path: '/districts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FactorsRoute = FactorsRouteImport.update({
@@ -44,6 +56,8 @@ const MapRoute = MapRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/districts': typeof DistrictsRoute
+  '/explore': typeof ExploreRoute
   '/factors': typeof FactorsRoute
   '/location': typeof LocationRoute
   '/map': typeof MapRoute
@@ -51,6 +65,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/districts': typeof DistrictsRoute
+  '/explore': typeof ExploreRoute
   '/factors': typeof FactorsRoute
   '/location': typeof LocationRoute
   '/map': typeof MapRoute
@@ -59,21 +75,47 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/districts': typeof DistrictsRoute
+  '/explore': typeof ExploreRoute
   '/factors': typeof FactorsRoute
   '/location': typeof LocationRoute
   '/map': typeof MapRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/factors' | '/location' | '/map'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/districts'
+    | '/explore'
+    | '/factors'
+    | '/location'
+    | '/map'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/factors' | '/location' | '/map'
-  id: '__root__' | '/' | '/about' | '/factors' | '/location' | '/map'
+  to:
+    | '/'
+    | '/about'
+    | '/districts'
+    | '/explore'
+    | '/factors'
+    | '/location'
+    | '/map'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/districts'
+    | '/explore'
+    | '/factors'
+    | '/location'
+    | '/map'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  DistrictsRoute: typeof DistrictsRoute
+  ExploreRoute: typeof ExploreRoute
   FactorsRoute: typeof FactorsRoute
   LocationRoute: typeof LocationRoute
   MapRoute: typeof MapRoute
@@ -93,6 +135,20 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/districts': {
+      id: '/districts'
+      path: '/districts'
+      fullPath: '/districts'
+      preLoaderRoute: typeof DistrictsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/factors': {
@@ -122,6 +178,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  DistrictsRoute: DistrictsRoute,
+  ExploreRoute: ExploreRoute,
   FactorsRoute: FactorsRoute,
   LocationRoute: LocationRoute,
   MapRoute: MapRoute,

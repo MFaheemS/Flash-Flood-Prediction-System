@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Database, Gauge, ShieldAlert, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { Nav } from "@/components/Nav";
+import { AppBackdrop } from "@/components/AppBackdrop";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -26,7 +27,7 @@ function AboutPage() {
 
   return (
     <>
-      <div className="app-backdrop" />
+      <AppBackdrop />
       <Nav />
 
       <main className="mx-auto max-w-4xl px-4 pt-10 pb-24">

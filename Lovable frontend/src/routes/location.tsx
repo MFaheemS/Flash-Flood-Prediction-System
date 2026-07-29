@@ -42,8 +42,10 @@ function LocationPage() {
   return (
     <>
       <WeatherBackground
-        condition={weather.data?.condition}
-        isDay={weather.data?.is_day ?? true}
+        weather={weather.data}
+        floodRisk={
+          point.data ? Math.max(point.data.week_risk ?? 0, point.data.month_risk ?? 0) : undefined
+        }
       />
       <Nav />
 

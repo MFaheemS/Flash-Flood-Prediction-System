@@ -55,7 +55,7 @@ function HomePage() {
 
   return (
     <>
-      <WeatherBackground condition={weather.data?.condition} isDay={weather.data?.is_day ?? true} />
+      <WeatherBackground weather={weather.data} />
       <Nav />
 
       <main className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:pt-16">

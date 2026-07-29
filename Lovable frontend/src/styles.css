@@ -132,17 +132,37 @@
   box-shadow: var(--glass-shadow);
 }
 
-/* Calm static "weather app" backdrop for info pages (Factors, About) that
-   should NOT use a live weather video */
+/* Clean, flat app surface for info pages (Factors, About, Districts, Explore)
+   — a solid dark colour with a faint dot grid. No gradient wash. */
 @utility app-backdrop {
   position: fixed;
   inset: 0;
   z-index: -10;
-  background:
-    radial-gradient(1200px 600px at 15% -5%, rgba(59, 130, 196, 0.35), transparent 60%),
-    radial-gradient(1000px 700px at 100% 0%, rgba(70, 167, 88, 0.18), transparent 55%),
-    linear-gradient(180deg, #0f1826 0%, #0b111b 55%, #090d15 100%);
+  background-color: #0a0e16;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.4px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
 }
+
+/* Smooth hover-lift for interactive cards */
+@utility lift {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+}
+
+/* Custom scrollbar */
+* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.16) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); background-clip: padding-box; }
 
 @utility text-display {
   font-family: var(--font-display);
