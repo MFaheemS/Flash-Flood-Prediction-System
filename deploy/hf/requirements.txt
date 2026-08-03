@@ -1,4 +1,5 @@
 # Runtime deps for the Hugging Face Space (Gradio SDK provides `gradio` itself).
+spaces
 fastapi
 uvicorn
 pandas

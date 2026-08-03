@@ -14,6 +14,19 @@ import os
 import gradio as gr
 import uvicorn
 
+# HF's free tier now runs Gradio Spaces on ZeroGPU, which refuses to start
+# unless at least one @spaces.GPU function exists — even though this CPU-only
+# API never touches a GPU. This no-op satisfies that startup check; the FastAPI
+# server itself keeps running on the always-available CPU.
+try:
+    import spaces
+
+    @spaces.GPU
+    def _zerogpu_noop():
+        return "ok"
+except Exception:
+    pass
+
 from src.app import app as api  # FastAPI app: routes + @on_event("startup") refresh
 
 with gr.Blocks(title="FloodWatch API") as demo:
