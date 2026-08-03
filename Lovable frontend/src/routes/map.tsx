@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronRight, X } from "lucide-react";
 import { api, HORIZONS, type Horizon, type RiskLocation } from "@/lib/api";
@@ -136,6 +136,10 @@ function MapPage() {
 
 /* ------- Leaflet map (client-only) ------- */
 
+// Raw Leaflet (no react-leaflet). react-leaflet pulled a shared React helper
+// into its chunk, which then evaluated `window` on every SSR page and crashed
+// the edge build — so the map is drawn imperatively with Leaflet only, loaded
+// client-side via dynamic import.
 function MapView({
   locations,
   horizonKey,
@@ -145,80 +149,51 @@ function MapView({
   horizonKey: keyof RiskLocation;
   onSelect: (l: RiskLocation) => void;
 }) {
-  const [mod, setMod] = useState<typeof import("react-leaflet") | null>(null);
+  const elRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const [L, setL] = useState<any>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    import("react-leaflet").then((m) => {
-      if (!cancelled) setMod(m);
-    });
-    return () => {
-      cancelled = true;
-    };
+    let c = false;
+    import("leaflet").then((m) => !c && setL(m.default ?? m));
+    return () => { c = true; };
   }, []);
 
-  if (!mod) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-sm text-white/60">Loading map…</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!L || !elRef.current || mapRef.current) return;
+    const map = L.map(elRef.current, { attributionControl: true }).setView([30.4, 69.3], 5);
+    mapRef.current = map;
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> · &copy; <a href="https://carto.com">CARTO</a>',
+    }).addTo(map);
+    map.__markers = L.layerGroup().addTo(map);
+    setTimeout(() => map.invalidateSize(), 60);
+    return () => { map.remove(); mapRef.current = null; };
+  }, [L]);
 
-  const { MapContainer, TileLayer, CircleMarker, Popup } = mod;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!L || !map || !map.__markers) return;
+    map.__markers.clearLayers();
+    locations.forEach((l) => {
+      const v = l[horizonKey] as number;
+      const color = riskColorHex(riskBand(v));
+      const rows = HORIZONS.map((h) => {
+        const c = riskColorHex(riskBand(l[h.key] as number));
+        return `<div style="display:flex;justify-content:space-between;gap:12px"><span style="opacity:.7">${h.label}</span><span style="color:${c}">${riskLabel(riskBand(l[h.key] as number))} · ${pct(l[h.key] as number)}</span></div>`;
+      }).join("");
+      const href = `/location?lat=${l.lat}&lon=${l.lon}&name=${encodeURIComponent(l.name)}`;
+      const html = `<div style="min-width:180px"><div style="font-weight:600">${l.name}</div><div style="font-size:11px;opacity:.7">${l.province ?? "—"}</div><div style="margin-top:8px;display:grid;gap:4px;font-size:12px">${rows}</div><a href="${href}" style="display:block;margin-top:12px;text-align:center;font-size:12px;font-weight:500;color:#93c5fd">View details →</a></div>`;
+      const marker = L.circleMarker([l.lat, l.lon], {
+        radius: 6 + v * 14, color, fillColor: color, fillOpacity: 0.55, weight: 1.5,
+      });
+      marker.bindPopup(html);
+      marker.on("click", () => onSelect(l));
+      marker.addTo(map.__markers);
+    });
+  }, [L, locations, horizonKey, onSelect]);
 
-  return (
-    <MapContainer
-      center={[30.4, 69.3]}
-      zoom={5}
-      scrollWheelZoom
-      style={{ height: "100%", width: "100%" }}
-      attributionControl
-    >
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> · &copy; <a href="https://carto.com">CARTO</a>'
-      />
-      {locations.map((l) => {
-        const v = l[horizonKey] as number;
-        const band = riskBand(v);
-        const color = riskColorHex(band);
-        return (
-          <CircleMarker
-            key={l.name + l.lat}
-            center={[l.lat, l.lon]}
-            radius={6 + v * 14}
-            pathOptions={{ color, fillColor: color, fillOpacity: 0.55, weight: 1.5 }}
-            eventHandlers={{ click: () => onSelect(l) }}
-          >
-            <Popup>
-              <div className="min-w-[180px]">
-                <div className="text-sm font-semibold">{l.name}</div>
-                <div className="text-[11px] opacity-70">{l.province ?? "—"}</div>
-                <div className="mt-2 space-y-1 text-xs">
-                  {HORIZONS.map((h) => (
-                    <div key={h.id} className="flex items-center justify-between gap-3">
-                      <span className="opacity-70">{h.label}</span>
-                      <span style={{ color: riskColorHex(riskBand(l[h.key] as number)) }}>
-                        {riskLabel(riskBand(l[h.key] as number))} · {pct(l[h.key] as number)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <Link
-                  to="/location"
-                  search={{ lat: l.lat, lon: l.lon, name: l.name }}
-                  className="mt-3 block text-center text-xs font-medium text-blue-300 hover:underline"
-                >
-                  View details →
-                </Link>
-              </div>
-            </Popup>
-          </CircleMarker>
-        );
-      })}
-    </MapContainer>
-  );
+  return <div ref={elRef} className="h-full w-full" style={{ background: "#0b0f17" }} />;
 }
 
 function DetailSheet({ loc, onClose }: { loc: RiskLocation; onClose: () => void }) {
