@@ -49,3 +49,6 @@ Lovable frontend/.output/
 # Internal-only docs
 docs/LOVABLE_PROMPT.md
 docs/PPT_GUIDE.md
+
+# local clone of the HF Space (not part of this repo)
+hf-space/
