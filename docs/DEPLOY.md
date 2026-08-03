@@ -22,19 +22,44 @@ needs — the big datasets, videos source, and GEE exports stay out.)
 
 ---
 
-## 1. Backend → Render (free)
+## 1. Backend → a free Docker host
 
-1. Go to **https://render.com** → sign in with GitHub.
-2. **New → Blueprint** → pick this repo → Render reads `render.yaml` and creates
-   the `floodwatch-api` Docker service. Click **Apply**.
-   - (Or **New → Web Service → Docker**, same repo, if you prefer manual.)
-3. Wait for the build (~5–8 min the first time). You'll get a URL like
-   **`https://floodwatch-api.onrender.com`**.
-4. Test it: open `https://floodwatch-api.onrender.com/api/meta` — you should get JSON.
+The Dockerfile works on any Docker host. Pick one — **no card options first**.
 
-**Free-tier note:** the service **sleeps after ~15 min idle**; the next request
-cold-starts (~30–60s) and the live-risk snapshot re-warms. Fine for a demo. To
-keep it always-on, upgrade to Render's cheapest paid instance or use Fly.io.
+### Option A (no card, recommended) — Hugging Face Spaces
+Free, no credit card, Docker support, and it doesn't sleep every 15 minutes.
+1. Sign up at **https://huggingface.co** (free, no card).
+2. **New → Space** → name it e.g. `floodwatch-api` → **SDK: Docker** → **Blank** →
+   Create. HF creates a Space git repo with a `README.md` that already has
+   `sdk: docker` and `app_port: 7860` — **keep that README.**
+3. Put the backend into that Space repo (in a terminal):
+   ```bash
+   git clone https://huggingface.co/spaces/<your-user>/floodwatch-api hf-space
+   cd hf-space
+   # copy ONLY the backend from your project (not the frontend):
+   cp -r ../Dockerfile ../config.yaml ../requirements-deploy.txt ../src .
+   mkdir -p models data/raw
+   cp ../models/district_flood_model.pkl ../models/district_flood_model_calibrated.pkl \
+      ../models/satellite_flood_model.pkl ../models/cloudburst_model.pkl models/
+   cp ../data/raw/district_flood_dataset.csv ../data/raw/satellite_flood_dataset.csv \
+      ../data/raw/cloudburst_dataset.csv data/raw/
+   git add -A && git commit -m "backend" && git push
+   ```
+   (Use an HF **access token** as the password when it prompts — Settings → Access Tokens.)
+4. HF builds and runs it; your URL is **`https://<your-user>-floodwatch-api.hf.space`**.
+   Test `…hf.space/api/meta`.
+
+### Option B (no card, git-connected) — Koyeb
+1. **https://koyeb.com** → sign up with GitHub (free "Hobby", usually no card).
+2. **Create Service → GitHub** → this repo → it detects the Dockerfile → free
+   instance → Deploy. You get an HTTPS URL.
+
+### Option C — Render (needs a card even on free)
+Render now asks for a card for Blueprints/free services. If you have one:
+**New → Blueprint** → this repo (uses `render.yaml`) → Apply. Otherwise use A or B.
+
+**Sleep note:** HF idles only after ~48h (fine). Koyeb/Render free sleep sooner —
+the keep-alive workflow (step 4) handles that.
 
 ---
 

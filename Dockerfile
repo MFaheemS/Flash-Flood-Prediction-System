@@ -17,6 +17,7 @@ COPY src/ ./src/
 COPY models/ ./models/
 COPY data/ ./data/
 
-EXPOSE 8000
-# Render/Fly provide $PORT; default to 8000 locally.
-CMD ["sh", "-c", "uvicorn src.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Hugging Face Spaces serve on 7860; Render/Fly inject $PORT. Honour $PORT,
+# else default to 7860 (works on HF out of the box).
+EXPOSE 7860
+CMD ["sh", "-c", "uvicorn src.app:app --host 0.0.0.0 --port ${PORT:-7860}"]
