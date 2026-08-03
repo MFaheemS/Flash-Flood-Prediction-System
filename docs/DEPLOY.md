@@ -26,40 +26,50 @@ needs — the big datasets, videos source, and GEE exports stay out.)
 
 The Dockerfile works on any Docker host. Pick one — **no card options first**.
 
-### Option A (no card, recommended) — Hugging Face Spaces
-Free, no credit card, Docker support, and it doesn't sleep every 15 minutes.
-1. Sign up at **https://huggingface.co** (free, no card).
-2. **New → Space** → name it e.g. `floodwatch-api` → **SDK: Docker** → **Blank** →
-   Create. HF creates a Space git repo with a `README.md` that already has
-   `sdk: docker` and `app_port: 7860` — **keep that README.**
-3. Put the backend into that Space repo (in a terminal):
+### Option A (no card, recommended) — Hugging Face **Gradio** Space
+HF's Docker SDK now needs a card, but the **Gradio SDK is free with no card**.
+We ship a tiny wrapper (`deploy/hf/app.py`) that runs the real FastAPI backend
+inside a Gradio Space — **verified working** (all `/api/*` routes + the
+background refresh run normally). It only idles after ~48h, so it's effectively
+always-on.
+
+1. Sign up at **https://huggingface.co** (free, no card). Create an **access
+   token**: Settings → Access Tokens → New token (role: *write*).
+2. **New → Space** → name `floodwatch-api` → **SDK: Gradio** → **Blank** → Create.
+3. Put the backend + wrapper into that Space repo (in a terminal):
    ```bash
    git clone https://huggingface.co/spaces/<your-user>/floodwatch-api hf-space
    cd hf-space
-   # copy ONLY the backend from your project (not the frontend):
-   cp -r ../Dockerfile ../config.yaml ../requirements-deploy.txt ../src .
+   # the Gradio wrapper (app.py / requirements.txt / README.md with the right header):
+   cp ../deploy/hf/app.py ../deploy/hf/requirements.txt ../deploy/hf/README.md .
+   # the backend the API loads:
+   cp ../config.yaml .
+   cp -r ../src .
    mkdir -p models data/raw
    cp ../models/district_flood_model.pkl ../models/district_flood_model_calibrated.pkl \
       ../models/satellite_flood_model.pkl ../models/cloudburst_model.pkl models/
    cp ../data/raw/district_flood_dataset.csv ../data/raw/satellite_flood_dataset.csv \
       ../data/raw/cloudburst_dataset.csv data/raw/
-   git add -A && git commit -m "backend" && git push
+   git add -A && git commit -m "FloodWatch backend" && git push
    ```
-   (Use an HF **access token** as the password when it prompts — Settings → Access Tokens.)
-4. HF builds and runs it; your URL is **`https://<your-user>-floodwatch-api.hf.space`**.
-   Test `…hf.space/api/meta`.
+   When `git push` asks for a password, paste your **HF access token**.
+4. Open the Space — it builds (~5–8 min) then shows a "🌊 FloodWatch API" page.
+   Your API base URL is **`https://<your-user>-floodwatch-api.hf.space`**.
+   Test **`…hf.space/api/meta`** → JSON.
+
+> Space repo layout after copying: `app.py`, `requirements.txt`, `README.md`,
+> `config.yaml`, `src/`, `models/` (4 files), `data/raw/` (3 CSVs).
 
 ### Option B (no card, git-connected) — Koyeb
-1. **https://koyeb.com** → sign up with GitHub (free "Hobby", usually no card).
-2. **Create Service → GitHub** → this repo → it detects the Dockerfile → free
-   instance → Deploy. You get an HTTPS URL.
+1. **https://koyeb.com** → sign up with GitHub (free "Hobby").
+2. **Create Service → GitHub** → this repo → it detects the `Dockerfile` → free
+   instance → Deploy. You get an HTTPS URL. (May ask for a card on some accounts.)
 
 ### Option C — Render (needs a card even on free)
-Render now asks for a card for Blueprints/free services. If you have one:
-**New → Blueprint** → this repo (uses `render.yaml`) → Apply. Otherwise use A or B.
+If you get a card later: **New → Blueprint** → this repo (uses `render.yaml`) → Apply.
 
-**Sleep note:** HF idles only after ~48h (fine). Koyeb/Render free sleep sooner —
-the keep-alive workflow (step 4) handles that.
+**Sleep note:** the HF Gradio Space idles only after ~48h. Koyeb/Render free
+sleep sooner — the keep-alive workflow (step 4) covers those.
 
 ---
 

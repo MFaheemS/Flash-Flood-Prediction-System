@@ -1,0 +1,13 @@
+# Runtime deps for the Hugging Face Space (Gradio SDK provides `gradio` itself).
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+xgboost
+shap
+matplotlib
+joblib
+pyyaml
+requests
+shapely
