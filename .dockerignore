@@ -20,7 +20,12 @@ data/raw/*
 !data/raw/district_flood_dataset.csv
 !data/raw/satellite_flood_dataset.csv
 !data/raw/cloudburst_dataset.csv
-data/processed/
+data/processed/*
+# keep the precomputed SHAP factor-impact tables the /api/factors endpoint serves
+!data/processed/cloudburst_factor_impact.csv
+!data/processed/district_flood_factor_impact.csv
+!data/processed/satellite_flood_factor_impact.csv
+!data/processed/flood_factors_factor_impact.csv
 data/raw/era5/
 data/raw/*.geojson
 

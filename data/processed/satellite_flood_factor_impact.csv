@@ -1,0 +1,14 @@
+rank,feature,mean_abs_shap_impact,direction,relative_importance_pct
+1,snow_mean,0.84664464,increases risk,18.29684
+2,precip_max,0.69819677,increases risk,15.088733
+3,month,0.4448421,decreases risk,9.613484
+4,precip_days,0.3929561,increases risk,8.492176
+5,snow_max,0.3861927,increases risk,8.346011
+6,precip_total,0.29264086,increases risk,6.324262
+7,temp_mean,0.27526578,increases risk,5.9487696
+8,precip_prev_month,0.26773545,increases risk,5.7860312
+9,temp_max,0.25741932,increases risk,5.5630894
+10,veg_mean,0.22799438,decreases risk,4.9271874
+11,soil_moist_prev_month,0.20612854,decreases risk,4.454644
+12,soil_moist_surface,0.18888353,increases risk,4.0819626
+13,soil_moist_root,0.14237203,decreases risk,3.0768023

@@ -1,0 +1,18 @@
+rank,feature,mean_abs_shap_impact,direction,relative_importance_pct
+1,historical_flood_freq,1.041134,increases risk,22.917585
+2,distance_to_waterway_km,0.6268033,decreases risk,13.79728
+3,waterway_count_10km,0.5216284,increases risk,11.482156
+4,soil_moisture_surface,0.44643965,increases risk,9.827091
+5,pressure,0.37816373,decreases risk,8.324192
+6,dew_point,0.31469685,increases risk,6.9271502
+7,humidity,0.2960708,increases risk,6.5171514
+8,soil_clay_pct,0.21540214,decreases risk,4.7414618
+9,elevation,0.1686481,increases risk,3.7123048
+10,cloud_cover,0.12921399,increases risk,2.8442762
+11,temp_dewpoint_spread,0.11654195,decreases risk,2.5653374
+12,urbanization_index,0.086949706,increases risk,1.913949
+13,pressure_drop_3h,0.059963997,increases risk,1.3199358
+14,temperature,0.05827024,increases risk,1.2826525
+15,wind_speed,0.028864969,increases risk,0.6353796
+16,slope,0.02751943,increases risk,0.60576147
+17,soil_moisture_root,0.026636982,increases risk,0.5863369

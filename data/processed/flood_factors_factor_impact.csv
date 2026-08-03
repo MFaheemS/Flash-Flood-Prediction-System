@@ -1,0 +1,21 @@
+rank,feature,mean_abs_shap_impact,direction,relative_importance_pct
+1,DamsQuality,0.0076689958,increases risk,5.1358433
+2,PoliticalFactors,0.0075767776,increases risk,5.074085
+3,PopulationScore,0.007573478,increases risk,5.071876
+4,IneffectiveDisasterPreparedness,0.00755373,increases risk,5.058651
+5,Landslides,0.007545987,increases risk,5.053466
+6,Siltation,0.0075407373,increases risk,5.0499496
+7,InadequatePlanning,0.00753804,increases risk,5.0481434
+8,RiverManagement,0.00753497,increases risk,5.0460873
+9,WetlandLoss,0.007499243,increases risk,5.0221615
+10,Urbanization,0.0074534975,increases risk,4.991526
+11,DeterioratingInfrastructure,0.007451268,increases risk,4.990033
+12,TopographyDrainage,0.007450933,increases risk,4.9898086
+13,MonsoonIntensity,0.007446202,increases risk,4.9866405
+14,Watersheds,0.007414551,increases risk,4.965444
+15,CoastalVulnerability,0.0074094683,increases risk,4.9620404
+16,DrainageSystems,0.0074021774,increases risk,4.9571576
+17,Deforestation,0.0073535605,increases risk,4.924599
+18,ClimateChange,0.0073447935,increases risk,4.9187284
+19,Encroachments,0.007300425,increases risk,4.8890147
+20,AgriculturalPractices,0.0072641824,increases risk,4.864744

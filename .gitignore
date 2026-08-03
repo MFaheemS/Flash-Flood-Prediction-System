@@ -8,6 +8,11 @@ data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+# precomputed SHAP factor tables served by /api/factors (needed at deploy time)
+!data/processed/cloudburst_factor_impact.csv
+!data/processed/district_flood_factor_impact.csv
+!data/processed/satellite_flood_factor_impact.csv
+!data/processed/flood_factors_factor_impact.csv
 models/*.pkl
 models/*.h5
 reports/*.png

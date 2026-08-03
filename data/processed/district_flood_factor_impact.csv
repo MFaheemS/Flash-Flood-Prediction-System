@@ -1,0 +1,9 @@
+rank,feature,mean_abs_shap_impact,direction,relative_importance_pct
+1,precip_total,1.7975199,increases risk,30.10567
+2,precip_max,1.4846108,increases risk,24.864927
+3,month,1.4234707,decreases risk,23.840927
+4,veg_trend,0.4706105,decreases risk,7.881996
+5,precip_prev_month,0.3128014,decreases risk,5.2389383
+6,temp_mean,0.19128752,increases risk,3.2037692
+7,veg_mean,0.16747919,decreases risk,2.8050168
+8,snow_mean,0.122922435,decreases risk,2.0587602

@@ -26,7 +26,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from src.analysis.factor_impact import compute_factor_impact
 from src.data.current_weather import get_current_weather
 from src.data.geo_reference import DISTRICT_TOWNS
 from src.data.load_data import load_config
@@ -191,18 +190,38 @@ def api_weather_current(lat: float, lon: float):
 
 _factor_cache: dict = {}
 
+# Human-readable target each model predicts (mirrors the labels in
+# src/analysis/factor_impact.py, which produced the precomputed CSVs).
+FACTOR_LABELS = {
+    "cloudburst": "flash-flood risk",
+    "flood_factors": "flood probability",
+    "satellite_flood": "monthly flood risk (satellite)",
+    "district_flood": "district monthly flood risk",
+}
+
 
 @app.get("/api/factors")
 def api_factors(dataset: str = "cloudburst"):
-    """SHAP-based factor-impact ranking for a given trained model."""
+    """Serve the precomputed SHAP factor-impact ranking for a trained model.
+
+    The SHAP values are computed offline (src/analysis/factor_impact.py) and
+    written to data/processed/{dataset}_factor_impact.csv, so the running API
+    needs neither shap nor matplotlib — keeping the deploy image small.
+    """
     if dataset not in DATASETS:
         raise HTTPException(400, f"dataset must be one of: {', '.join(sorted(DATASETS))}")
     if dataset in _factor_cache:
         return _factor_cache[dataset]
-    try:
-        result, label = compute_factor_impact(dataset)
-    except FileNotFoundError as exc:
-        raise HTTPException(503, str(exc))
-    payload = {"dataset": dataset, "label": label, "factors": result.to_dict(orient="records")}
+    import pandas as pd
+
+    path = os.path.join("data", "processed", f"{dataset}_factor_impact.csv")
+    if not os.path.exists(path):
+        raise HTTPException(503, f"factor impact for '{dataset}' has not been computed yet")
+    result = pd.read_csv(path)
+    payload = {
+        "dataset": dataset,
+        "label": FACTOR_LABELS.get(dataset, dataset),
+        "factors": result.to_dict(orient="records"),
+    }
     _factor_cache[dataset] = payload
     return payload

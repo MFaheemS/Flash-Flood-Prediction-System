@@ -1,7 +1,6 @@
 import joblib
 import numpy as np
 import pandas as pd
-import shap
 
 from src.data.load_data import load_config
 
@@ -26,6 +25,8 @@ def explain(input_df: pd.DataFrame, top_n: int = 3) -> pd.DataFrame:
     model = joblib.load(config["model"]["save_path"])
     feature_cols = config["features"]["numeric"] + config["features"]["categorical"]
     X = input_df[feature_cols]
+
+    import shap  # lazy: only the offline explanation path needs it, keeps the API deploy slim
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X)
