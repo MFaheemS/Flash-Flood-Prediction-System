@@ -1,0 +1,15 @@
+# Slim runtime dependencies for the deployed FastAPI backend.
+# (The full requirements.txt includes training/notebook-only libs like
+# tensorflow, rasterio, cdsapi, jupyter that the live API doesn't need.)
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+xgboost
+shap
+matplotlib
+joblib
+pyyaml
+requests
+shapely

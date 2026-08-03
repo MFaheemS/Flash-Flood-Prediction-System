@@ -1,0 +1,32 @@
+# Keep the backend image small: exclude everything the API doesn't load.
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.git/
+Lovable frontend/
+Datasets/
+sf/
+notebooks/
+reports/
+tests/
+docs/
+*.zip
+CLOUDPAK25_2010_2025_v3.csv
+cloudpredictionsystemproject.csv
+
+# raw data: keep only the three CSVs the API loads
+data/raw/*
+!data/raw/district_flood_dataset.csv
+!data/raw/satellite_flood_dataset.csv
+!data/raw/cloudburst_dataset.csv
+data/processed/
+data/raw/era5/
+data/raw/*.geojson
+
+# models: keep only the four the API loads
+models/*
+!models/district_flood_model.pkl
+!models/district_flood_model_calibrated.pkl
+!models/satellite_flood_model.pkl
+!models/cloudburst_model.pkl

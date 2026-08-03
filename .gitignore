@@ -12,6 +12,15 @@ models/*.pkl
 models/*.h5
 reports/*.png
 
+# Runtime artifacts the deployed API loads — kept despite the broad ignores above
+!models/district_flood_model.pkl
+!models/district_flood_model_calibrated.pkl
+!models/satellite_flood_model.pkl
+!models/cloudburst_model.pkl
+!data/raw/district_flood_dataset.csv
+!data/raw/satellite_flood_dataset.csv
+!data/raw/cloudburst_dataset.csv
+
 # Raw source datasets (large; download/export separately — see docs/)
 Datasets/
 sf/
@@ -19,9 +28,9 @@ sf/
 cloudpredictionsystemproject.csv
 CLOUDPAK25_2010_2025_v3.csv
 
-# Large media — weather background videos (hundreds of MB)
+# Source video originals (hundreds of MB) stay out; the COMPRESSED versions in
+# the frontend's public/videos are committed so deploys have them.
 Weather vids/
-Lovable frontend/public/videos/
 
 # Frontend build + deps (Lovable frontend has its own .gitignore too)
 Lovable frontend/node_modules/

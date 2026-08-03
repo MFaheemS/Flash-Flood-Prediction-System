@@ -24,8 +24,6 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 
 from src.data.load_data import load_config
 
@@ -149,6 +147,9 @@ def save_csv(result: pd.DataFrame, out_path: str):
 
 
 def save_chart(result: pd.DataFrame, out_path: str, label: str):
+    import matplotlib.pyplot as plt  # lazy: not needed by the API, keeps the deploy slim
+    from matplotlib.patches import Patch
+
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     plot_df = result.sort_values("mean_abs_shap_impact", ascending=True)
     colors = [COLOR_INCREASE if d == "increases risk" else COLOR_DECREASE for d in plot_df["direction"]]

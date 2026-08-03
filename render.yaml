@@ -1,0 +1,11 @@
+# Render Blueprint for the FloodWatch backend API.
+# In Render: New → Blueprint → point at this repo. It builds the Dockerfile
+# and gives you an HTTPS URL like https://floodwatch-api.onrender.com.
+services:
+  - type: web
+    name: floodwatch-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/meta
+    autoDeploy: true
