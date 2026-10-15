@@ -5,6 +5,12 @@ risk over four horizons (next hour, next 24h, next 7 days, next 30 days),
 using live/forecast weather, terrain, urbanization, and each district's
 historical cloudburst track record.
 
+## Demo
+
+![FloodWatch demo: risk map, district forecast, explore timeline and factor analysis](docs/demo/floodwatch-demo.gif)
+
+*Full walkthrough at 2× speed. [Download the original video (MP4, 1:19)](docs/demo/floodwatch-demo.mp4?raw=true).*
+
 ## Run it
 
 ```
